@@ -3,6 +3,9 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -10,6 +13,8 @@ import {
 import { ArticleService } from './article.service';
 import { createArticleDto } from './dto/create-article.dto';
 import type { IArticle } from './interface/article.interface';
+import { FindOneParams } from './dto/find-one.params';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -21,8 +26,8 @@ export class ArticleController {
   }
 
   @Get('/:id')
-  findOne(@Param() params: any): string {
-    return `Tampil detail Article ${params.id}`;
+  findOne(@Param() params: FindOneParams): IArticle {
+    return this.findOneOrFail(params.id);
   }
 
   @Post()
@@ -31,12 +36,27 @@ export class ArticleController {
   }
 
   @Put('/:id')
-  update(@Param() params: any): string {
-    return `Update Article ${params.id}`;
+  update(
+    @Param() params: FindOneParams,
+    @Body() updateArticleDto: UpdateArticleDto,
+  ): IArticle {
+    const article = this.findOneOrFail(params.id);
+    return this.articleService.updateArticleByParams(article, updateArticleDto);
   }
 
   @Delete('/:id')
-  delete(@Param() params: any): string {
-    return `Delete Article ${params.id}`;
+  @HttpCode(HttpStatus.NO_CONTENT)
+  delete(@Param() params: FindOneParams): void {
+    const article = this.findOneOrFail(params.id);
+    this.articleService.deleteArticleByParams(article);
+  }
+
+  private findOneOrFail(id: string): IArticle {
+    const article = this.articleService.findOneByParams(id);
+    if (!article) {
+      throw new NotFoundException();
+    }
+
+    return article;
   }
 }
