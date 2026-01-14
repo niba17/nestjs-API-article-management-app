@@ -2,41 +2,40 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { Injectable } from '@nestjs/common';
 import { IArticle } from './interface/article.interface';
 import { createArticleDto } from './dto/create-article.dto';
-import { randomUUID } from 'crypto';
+import { Article } from './entities/article.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class ArticleService {
   //resource
-  private article: IArticle[] = [];
+  constructor(
+    @InjectRepository(Article)
+    private ArticleRepository: Repository<Article>,
+  ) {}
 
-  createArticle(createArticleDto: createArticleDto) {
-    const article: IArticle = {
-      id: randomUUID(),
-      ...createArticleDto,
-    };
-    this.article.push(article);
-    return article;
+  async createArticle(createArticleDto: createArticleDto): Promise<Article> {
+    const newArticle = await this.ArticleRepository.save(createArticleDto);
+    return newArticle;
   }
 
-  findAllArticle(): IArticle[] {
-    return this.article;
+  async findAllArticle(): Promise<Article[]> {
+    return await this.ArticleRepository.find();
   }
 
-  findOneByParams(id: string): IArticle | undefined {
-    return this.article.find((item) => item.id === id);
+  async findOneByParams(id: string): Promise<Article | null> {
+    return await this.ArticleRepository.findOne({ where: { id } });
   }
 
-  updateArticleByParams(
+  async updateArticleByParams(
     article: IArticle,
     UpdateArticleDto: UpdateArticleDto,
-  ): IArticle {
+  ): Promise<Article> {
     Object.assign(article, UpdateArticleDto);
-    return article;
+    return await this.ArticleRepository.save(article);
   }
 
-  deleteArticleByParams(articleData: IArticle): void {
-    this.article = this.article.filter(
-      (filterData) => filterData.id !== articleData.id,
-    );
+  async deleteArticleByParams(articleData: IArticle): Promise<void> {
+    await this.ArticleRepository.delete(articleData.id);
   }
 }
