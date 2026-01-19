@@ -51,7 +51,7 @@ export class CategoryController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param() params: FindOneParams) {
     const category = await this.findOneOrFail(params.id);
-    this.categoryService.remove(category);
+    await this.categoryService.remove(category);
   }
 
   private async findOneOrFail(id: string): Promise<Category> {
